@@ -1,0 +1,130 @@
+{
+  "entities": {
+    "category": {
+      "title": "Category",
+      "description": "Category item stored in cloud database",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the category"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the category"
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the owner of this category"
+        },
+        "isArchived": {
+          "type": "boolean",
+          "description": "Status indicating if this category is archived"
+        }
+      },
+      "required": ["id", "name", "userId"]
+    },
+    "product": {
+      "title": "Product",
+      "description": "Product item inside user inventory",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the product"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category ID"
+        },
+        "price": {
+          "type": "number",
+          "description": "Selling price of the product"
+        },
+        "stock": {
+          "type": "number",
+          "description": "Current inventory stock of the product"
+        },
+        "image": {
+          "type": "string",
+          "description": "Base64 encoded image string of the product for local visual search"
+        },
+        "features": {
+          "type": "array",
+          "description": "Visual feature vector array of lengths"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Administrative note on product"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner userId of the product"
+        },
+        "isArchived": {
+          "type": "boolean",
+          "description": "Archived status"
+        }
+      },
+      "required": ["id", "name", "category", "price", "stock", "userId"]
+    },
+    "invoice": {
+      "title": "Invoice",
+      "description": "Invoice documents containing items and totals",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the invoice"
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Purchaser/contractor name"
+        },
+        "items": {
+          "type": "array",
+          "description": "List of invoice order items"
+        },
+        "total": {
+          "type": "number",
+          "description": "Total checkout price"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Note left on invoice"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation ISO date"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Updated ISO date"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Creator user id"
+        }
+      },
+      "required": ["id", "customerName", "items", "total", "createdAt", "userId"]
+    }
+  },
+  "firestore": {
+    "/categories/{categoryId}": {
+      "schema": "category",
+      "description": "The collection storing sanitary installation categories"
+    },
+    "/products/{productId}": {
+      "schema": "product",
+      "description": "The collection tracking the plumbing item warehouse catalog"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "invoice",
+      "description": "The collection storing invoice documents"
+    }
+  }
+}

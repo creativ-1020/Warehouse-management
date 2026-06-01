@@ -1,0 +1,123 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for auth state
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Helper function for incoming and existing resource wrappers
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Path Variable & ID Guard
+    function isValidId(id) {
+      return id is string && id.size() <= 128;
+    }
+
+    // 1. Defend all collections by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ==========================================
+    // 2. CATEGORIES COLLECTION
+    // ==========================================
+    match /categories/{categoryId} {
+      allow get: if isSignedIn() && isOwner(existing().userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() && 
+        isValidId(categoryId) &&
+        incoming().id == categoryId &&
+        incoming().userId == request.auth.uid &&
+        incoming().name is string && incoming().name.size() > 0 && incoming().name.size() <= 200 &&
+        (!('isArchived' in incoming()) || incoming().isArchived is bool);
+
+      allow update: if isSignedIn() &&
+        isOwner(existing().userId) &&
+        incoming().id == existing().id &&
+        incoming().userId == existing().userId &&
+        incoming().name is string && incoming().name.size() > 0 && incoming().name.size() <= 200 &&
+        (!('isArchived' in incoming()) || incoming().isArchived is bool);
+
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+
+    // ==========================================
+    // 3. PRODUCTS COLLECTION
+    // ==========================================
+    match /products/{productId} {
+      allow get: if isSignedIn() && isOwner(existing().userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() && 
+        isValidId(productId) &&
+        incoming().id == productId &&
+        incoming().userId == request.auth.uid &&
+        incoming().name is string && incoming().name.size() > 0 && incoming().name.size() <= 300 &&
+        incoming().category is string && incoming().category.size() <= 128 &&
+        (incoming().price is int || incoming().price is float) && incoming().price >= 0 &&
+        (incoming().stock is int || incoming().stock is float) && incoming().stock >= 0 &&
+        (!('notes' in incoming()) || (incoming().notes is string && incoming().notes.size() <= 2000)) &&
+        (!('isArchived' in incoming()) || incoming().isArchived is bool) &&
+        (!('image' in incoming()) || (incoming().image is string && incoming().image.size() <= 2097152)) && // Max 2MB base64
+        (!('features' in incoming()) || incoming().features is list);
+
+      allow update: if isSignedIn() &&
+        isOwner(existing().userId) &&
+        incoming().id == existing().id &&
+        incoming().userId == existing().userId &&
+        incoming().name is string && incoming().name.size() > 0 && incoming().name.size() <= 300 &&
+        incoming().category is string && incoming().category.size() <= 128 &&
+        (incoming().price is int || incoming().price is float) && incoming().price >= 0 &&
+        (incoming().stock is int || incoming().stock is float) && incoming().stock >= 0 &&
+        (!('notes' in incoming()) || (incoming().notes is string && incoming().notes.size() <= 2000)) &&
+        (!('isArchived' in incoming()) || incoming().isArchived is bool) &&
+        (!('image' in incoming()) || (incoming().image is string && incoming().image.size() <= 2097152)) &&
+        (!('features' in incoming()) || incoming().features is list);
+
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+
+    // ==========================================
+    // 4. INVOICES COLLECTION
+    // ==========================================
+    match /invoices/{invoiceId} {
+      allow get: if isSignedIn() && isOwner(existing().userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() && 
+        isValidId(invoiceId) &&
+        incoming().id == invoiceId &&
+        incoming().userId == request.auth.uid &&
+        incoming().customerName is string && incoming().customerName.size() <= 300 &&
+        incoming().items is list && incoming().items.size() <= 200 &&
+        (incoming().total is int || incoming().total is float) && incoming().total >= 0 &&
+        incoming().createdAt is string &&
+        (!('notes' in incoming()) || (incoming().notes is string && incoming().notes.size() <= 2000));
+
+      allow update: if isSignedIn() &&
+        isOwner(existing().userId) &&
+        incoming().id == existing().id &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt && // Immutable createdAt date
+        incoming().customerName is string && incoming().customerName.size() <= 300 &&
+        incoming().items is list && incoming().items.size() <= 200 &&
+        (incoming().total is int || incoming().total is float) && incoming().total >= 0 &&
+        (!('notes' in incoming()) || (incoming().notes is string && incoming().notes.size() <= 2000));
+
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+  }
+}
